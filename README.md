@@ -2,6 +2,9 @@
 
 A lightweight Python web server for browsing, viewing, editing, uploading, moving, copying, renaming, and deleting files under `~/.openclaw` from any device on your local network.
 
+<img width="1407" height="947" alt="image" src="https://github.com/user-attachments/assets/7f0112fa-1cb9-4136-938a-a0c470e2a67a" />
+
+
 ## Features
 
 - Browse from `~/.openclaw/workspace` and one level up to `~/.openclaw`
