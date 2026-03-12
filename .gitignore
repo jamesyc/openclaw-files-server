@@ -24,3 +24,8 @@ htmlcov/
 .venv/
 venv/
 env/
+
+# Build metadata
+*.egg-info/
+build/
+dist/
