@@ -83,3 +83,38 @@ python3 -m pytest tests/test_server.py -v
 - Large files warn before loading; very large files are download-only
 - Set `OPENCLAW_DASHBOARD_URL` if you want the header to show a `Dashboard` button; otherwise it is hidden
 - No authentication is included by design
+
+## macOS launchd setup
+
+If you want the server to start automatically at system boot on macOS, you can run it with a `launchd` daemon.
+
+Example daemon location:
+
+`/Library/LaunchDaemons/com.openclaw.webserver.plist`
+
+Recommended behavior:
+
+- Run `server.py` as `root` if you need to bind to port `80`
+- Set `KeepAlive = true` so the service restarts automatically if it crashes
+- Send stdout and stderr to `/tmp/webserver.log` for simple troubleshooting
+
+Useful commands:
+
+Stop the service without removing it:
+
+```bash
+sudo launchctl stop com.openclaw.webserver
+```
+
+Start the service manually:
+
+```bash
+sudo launchctl start com.openclaw.webserver
+```
+
+Remove it completely:
+
+```bash
+sudo launchctl unload /Library/LaunchDaemons/com.openclaw.webserver.plist
+sudo rm /Library/LaunchDaemons/com.openclaw.webserver.plist
+```
