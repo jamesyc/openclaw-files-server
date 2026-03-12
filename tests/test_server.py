@@ -3,6 +3,7 @@ import unittest
 import urllib.error
 import urllib.parse
 from http.client import HTTPConnection
+from unittest import mock
 
 import server
 from tests.support import ServerTestCase
@@ -98,6 +99,20 @@ class TestEditor(ServerTestCase):
         with self.assertRaises(urllib.error.HTTPError) as cm:
             self.live.request('POST', '/save/../../etc/passwd', body=body, headers={'Content-Type': 'application/x-www-form-urlencoded'})
         self.assertEqual(cm.exception.code, 403)
+
+    def test_atomic_write_restores_owner_when_running_as_root(self):
+        target = self.fixture.workspace / 'hello.txt'
+        target.chmod(0o644)
+        stat_result = target.stat()
+        with mock.patch.object(server.os, 'geteuid', return_value=0), \
+                mock.patch.object(server.os, 'chown') as mock_chown:
+            server.atomic_write_text_preserving_metadata(target, 'updated text')
+
+        mock_chown.assert_called_once()
+        args = mock_chown.call_args.args
+        self.assertEqual(args[1:], (stat_result.st_uid, stat_result.st_gid))
+        self.assertEqual(target.stat().st_mode & 0o777, stat_result.st_mode & 0o777)
+        self.assertEqual(target.read_text(), 'updated text')
 
 
 class TestDelete(ServerTestCase):

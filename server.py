@@ -205,6 +205,24 @@ def parse_multipart(headers, body: bytes):
     return files
 
 
+def atomic_write_text_preserving_metadata(target: Path, content: str) -> None:
+    original_stat = target.stat()
+    fd, tmp_name = tempfile.mkstemp(prefix=target.name + '.', suffix='.tmp', dir=str(target.parent))
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
+            tmp.write(content)
+        shutil.copystat(target, tmp_name)
+        if os.geteuid() == 0:
+            os.chown(tmp_name, original_stat.st_uid, original_stat.st_gid)
+        os.replace(tmp_name, target)
+    except Exception:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+
+
 class FileBrowserHandler(BaseHTTPRequestHandler):
     server_version = 'OpenClawFileBrowser/0.1'
 
@@ -613,10 +631,7 @@ class FileBrowserHandler(BaseHTTPRequestHandler):
         data = urllib.parse.parse_qs(raw)
         content = data.get('content', [''])[-1]
         try:
-            fd, tmp_name = tempfile.mkstemp(prefix=target.name + '.', suffix='.tmp', dir=str(target.parent))
-            with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
-                tmp.write(content)
-            os.replace(tmp_name, target)
+            atomic_write_text_preserving_metadata(target, content)
         except OSError as exc:
             self.send_json({'error': str(exc)}, 409)
             return
