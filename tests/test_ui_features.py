@@ -37,8 +37,11 @@ class TestStaticUiRegressions(ServerTestCase):
         self.assertIn('--code-font-size:', css)
         self.assertIn('--code-line-height:', css)
         self.assertIn('.ln, .lc {', css)
+        self.assertIn('display: block;', css)
         self.assertIn('font-family: inherit;', css)
         self.assertIn('line-height: inherit;', css)
+        self.assertIn('-webkit-text-size-adjust: 100%;', css)
+        self.assertIn('text-size-adjust: 100%;', css)
 
     def test_editor_wrap_measurement_uses_rendered_character_widths(self):
         js = (server.STATIC_DIR / 'app.js').read_text()

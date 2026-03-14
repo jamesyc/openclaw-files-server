@@ -66,7 +66,7 @@ class TestViewer(ServerTestCase):
     def test_view_text_file(self):
         body = self.live.get('/browse/workspace/hello.txt').read().decode()
         self.assertIn('hello world', body)
-        self.assertIn('<pre', body)
+        self.assertIn("id='viewer-pre'", body)
 
     def test_viewer_renders_hash_prefix_lines_as_plain_text(self):
         target = self.fixture.workspace / 'hashes.md'
@@ -74,6 +74,11 @@ class TestViewer(ServerTestCase):
         body = self.live.get('/browse/workspace/hashes.md').read().decode()
         self.assertIn("<span class='lc'>## heading</span>", body)
         self.assertNotIn('<h2>', body)
+
+    def test_viewer_uses_valid_block_container_for_code_rows(self):
+        body = self.live.get('/browse/workspace/hello.txt').read().decode()
+        self.assertIn("<div id='viewer-pre' class='viewer-pre'>", body)
+        self.assertNotIn("<pre id='viewer-pre'", body)
 
     def test_view_nonexistent_file(self):
         with self.assertRaises(urllib.error.HTTPError) as cm:

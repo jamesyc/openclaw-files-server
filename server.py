@@ -531,7 +531,7 @@ class FileBrowserHandler(BaseHTTPRequestHandler):
                 rendered = []
                 for idx, line in enumerate(lines, start=1):
                     rendered.append(f"<div class='code-line'><span class='ln'>{idx}</span><span class='lc'>{html.escape(line)}</span></div>")
-                content_html = f"<pre id='viewer-pre' class='viewer-pre'>{''.join(rendered)}</pre><textarea id='viewer-raw' hidden>{html.escape(text)}</textarea>"
+                content_html = f"<div id='viewer-pre' class='viewer-pre'>{''.join(rendered)}</div><textarea id='viewer-raw' hidden>{html.escape(text)}</textarea>"
             except Exception as exc:
                 content_html = f"<div class='banner danger'>Unable to read file: {html.escape(str(exc))}</div>"
                 can_edit = False
