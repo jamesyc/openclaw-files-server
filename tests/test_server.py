@@ -68,6 +68,13 @@ class TestViewer(ServerTestCase):
         self.assertIn('hello world', body)
         self.assertIn('<pre', body)
 
+    def test_viewer_renders_hash_prefix_lines_as_plain_text(self):
+        target = self.fixture.workspace / 'hashes.md'
+        target.write_text('## heading\nplain text\n')
+        body = self.live.get('/browse/workspace/hashes.md').read().decode()
+        self.assertIn("<span class='lc'>## heading</span>", body)
+        self.assertNotIn('<h2>', body)
+
     def test_view_nonexistent_file(self):
         with self.assertRaises(urllib.error.HTTPError) as cm:
             self.live.get('/browse/workspace/missing.txt')

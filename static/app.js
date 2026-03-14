@@ -338,6 +338,45 @@
     const editor = $('#editor');
     if (!editor) return;
     const lines = $('#editor-lines');
+    const wrapMeasureCanvas = document.createElement('canvas');
+    const wrapMeasureContext = wrapMeasureCanvas.getContext('2d');
+    let cachedFont = '';
+    let charWidthCache = new Map();
+    const syncWrapMeasurementFont = (style) => {
+      if (!wrapMeasureContext) return;
+      const font = [
+        style.fontStyle,
+        style.fontVariant,
+        style.fontWeight,
+        style.fontStretch,
+        style.fontSize,
+        style.fontFamily,
+      ].filter(Boolean).join(' ');
+      if (font === cachedFont) return;
+      cachedFont = font;
+      charWidthCache = new Map();
+      wrapMeasureContext.font = font;
+    };
+    const measureWrappedRows = (text, usableWidth) => {
+      if (!wrapMeasureContext || usableWidth <= 0) return 1;
+      if (!text) return 1;
+      let rows = 1;
+      let currentWidth = 0;
+      for (const char of text) {
+        let width = charWidthCache.get(char);
+        if (width === undefined) {
+          width = wrapMeasureContext.measureText(char).width;
+          charWidthCache.set(char, width);
+        }
+        if (currentWidth > 0 && currentWidth + width > usableWidth) {
+          rows += 1;
+          currentWidth = width;
+        } else {
+          currentWidth += width;
+        }
+      }
+      return rows;
+    };
     const getWrappedRows = (lineText) => {
       if (!editor.classList.contains('wrap')) return 1;
       const style = getComputedStyle(editor);
@@ -345,15 +384,10 @@
       const rightPad = parseFloat(style.paddingRight || '0');
       const usableWidth = editor.clientWidth - leftPad - rightPad;
       if (usableWidth <= 0) return 1;
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return 1;
-      ctx.font = `${style.fontSize} ${style.fontFamily}`;
-      const charWidth = ctx.measureText('M').width || 8;
-      const columns = Math.max(1, Math.floor(usableWidth / charWidth));
       const tabSize = Number.parseInt(style.tabSize || '8', 10) || 8;
       const expanded = lineText.replace(/\t/g, ' '.repeat(tabSize));
-      return Math.max(1, Math.ceil(Math.max(1, expanded.length) / columns));
+      syncWrapMeasurementFont(style);
+      return measureWrappedRows(expanded, usableWidth);
     };
     const resizeEditorToContent = () => {
       editor.style.height = 'auto';

@@ -1,3 +1,4 @@
+import server
 from tests.support import ServerTestCase
 
 
@@ -27,3 +28,20 @@ class TestEditorUi(ServerTestCase):
     def test_edit_page_has_line_number_gutter(self):
         body = self.live.get('/edit/workspace/hello.txt').read().decode()
         self.assertIn('id="editor-lines"', body)
+
+
+class TestStaticUiRegressions(ServerTestCase):
+    def test_code_views_share_css_font_metrics(self):
+        css = (server.STATIC_DIR / 'style.css').read_text()
+        self.assertIn('--code-font-family:', css)
+        self.assertIn('--code-font-size:', css)
+        self.assertIn('--code-line-height:', css)
+        self.assertIn('.ln, .lc {', css)
+        self.assertIn('font-family: inherit;', css)
+        self.assertIn('line-height: inherit;', css)
+
+    def test_editor_wrap_measurement_uses_rendered_character_widths(self):
+        js = (server.STATIC_DIR / 'app.js').read_text()
+        self.assertIn('const measureWrappedRows = (text, usableWidth) => {', js)
+        self.assertIn("width = wrapMeasureContext.measureText(char).width;", js)
+        self.assertNotIn("const charWidth = ctx.measureText('M').width || 8;", js)
